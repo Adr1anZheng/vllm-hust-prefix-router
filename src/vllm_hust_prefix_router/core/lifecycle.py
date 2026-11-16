@@ -19,7 +19,7 @@ class LifecycleRoutingConfig:
     """Configuration for lifecycle-aware routing costs."""
 
     prefill_load_weight: float = 1.0
-    active_request_weight: float = 0.0
+    active_request_weight: float = 4.0
     decode_block_weight: float = 1.0
     selection_temperature: float = 0.0
     track_output_blocks: bool = False

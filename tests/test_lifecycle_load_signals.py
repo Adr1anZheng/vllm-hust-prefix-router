@@ -135,7 +135,9 @@ def test_decode_load_is_released_on_abort_and_expiry():
 def test_decode_cost_distinguishes_sequences_sharing_the_same_blocks(weight, expected):
     tracker = LifecycleLoadTracker(
         block_size=16,
-        config=LifecycleRoutingConfig(active_decode_sequence_weight=weight),
+        config=LifecycleRoutingConfig(
+            active_request_weight=0, active_decode_sequence_weight=weight
+        ),
     )
     for index in range(10):
         request_id = f"background-{index}"
@@ -156,7 +158,10 @@ def test_decode_cost_distinguishes_sequences_sharing_the_same_blocks(weight, exp
 @pytest.mark.parametrize("weight,expected", [(0.0, "a"), (2.0, "b")])
 def test_queue_cost_can_outweigh_prefix_benefit(weight, expected):
     tracker = LifecycleLoadTracker(
-        block_size=16, config=LifecycleRoutingConfig(router_queue_weight=weight)
+        block_size=16,
+        config=LifecycleRoutingConfig(
+            active_request_weight=0, router_queue_weight=weight
+        ),
     )
     selection = tracker.select_and_reserve(
         "new", [_load("a", queue=3), _load("b", matched_tokens=0)]

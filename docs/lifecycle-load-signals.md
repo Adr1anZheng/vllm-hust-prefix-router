@@ -22,6 +22,12 @@ previous definitions. New Decode sequences are not charged before their
 output is observed. The queue term counts existing waiters, not the incoming
 request, active HTTP connections, or backend scheduler waiters.
 
+The default `active_request_weight` is 4 rather than the previous 0. This
+changes routing when tracked prompt counts differ. Set it to 0 to recover the
+previous default score. The new Decode and queue weights still default to 0.
+The choice of 4 is based on limited workload-specific experiments; it is not a
+calibrated latency estimate or a guarantee against regressions.
+
 ## Observed active Decode sequences
 
 The response observer starts counting a choice on its first nonempty text,
@@ -72,7 +78,8 @@ settings, including the original weights, should stay identical for a comparison
 ```
 
 These positive values are illustrative, not tuned or performance-qualified.
-Use `(0, 0)` for the original score, `(1, 0)` for Decode only, `(0, 1)` for
+Set `active_request_weight` to 0 to reproduce the previous default score.
+With that setting, use `(0, 0)` for the original score, `(1, 0)` for Decode only, `(0, 1)` for
 queue only, and `(1, 1)` for both, in the key order above. Both omitted keys
 default to zero. Weights must be finite non-negative numbers; booleans are
 rejected. No regression or automatic weight adaptation is implemented.
