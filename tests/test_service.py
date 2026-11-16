@@ -387,7 +387,10 @@ async def test_lifecycle_routes_away_from_a_real_router_admission_queue():
 
 
 @pytest.mark.asyncio
-async def test_live_decode_choices_affect_routing_and_metrics():
+@pytest.mark.parametrize("decode_weight,expected_node", [(0, "node-0"), (1, "node-1")])
+async def test_live_decode_choices_affect_routing_and_metrics(
+    decode_weight, expected_node
+):
     finish_first = asyncio.Event()
     finish_all = asyncio.Event()
 
@@ -422,7 +425,8 @@ async def test_live_decode_choices_affect_routing_and_metrics():
         config=LifecycleRoutingConfig(
             prefill_load_weight=0,
             decode_block_weight=0,
-            active_decode_sequence_weight=1,
+            active_request_weight=0,
+            active_decode_sequence_weight=decode_weight,
         ),
         random_sample=lambda: 0,
     )
@@ -456,11 +460,11 @@ async def test_live_decode_choices_affect_routing_and_metrics():
             lambda: tracker.worker_load(("node-0", None)).active_decode_sequences == 1
         )
         second = await client.post(
-            "/v1/completions", json={"prompt": "hello", "stream": True}
+            "/v1/completions", json={"prompt": "hello", "stream": True, "n": 2}
         )
-        assert second.headers["x-vllm-hust-router-node"] == "node-1"
-        await second.read()
+        assert second.headers["x-vllm-hust-router-node"] == expected_node
         finish_all.set()
+        await second.read()
         await first.read()
         await _wait_until(lambda: tracker.active_request_ids() == ())
         assert tracker.worker_load(("node-0", None)).active_decode_sequences == 0
